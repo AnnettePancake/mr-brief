@@ -9,7 +9,7 @@
 
 import { readFileSync } from "node:fs";
 import { MARKER, readHead, isStale } from "./lib/marker.mjs";
-import { ISSUE, issueLines } from "./lib/issue.mjs";
+import { isIssueLine, issueLines } from "./lib/issue.mjs";
 
 const argv = process.argv.slice(2);
 const file = argv.find((a, i) => !a.startsWith("--") && argv[i - 1] !== "--head");
@@ -49,8 +49,12 @@ lines.forEach((raw, i) => {
   if (issueAt.has(i)) return; // Closes #N
   text.push({ i, s });
 });
+// An issue line lower down is misplaced. Inside a code block it is an example, not a line.
+let fenced = false;
+const inCode = new Set();
+lines.forEach((l, i) => { if (/^\s*```/.test(l)) { fenced = !fenced; return; } if (fenced) inCode.add(i); });
 text.forEach(({ i, s }) => {
-  if (ISSUE.test(s.trim())) fail.push(`line ${i + 1}: "${s.trim()}" must sit right under the marker, above the lead`);
+  if (!inCode.has(i) && isIssueLine(s)) fail.push(`line ${i + 1}: "${s.trim()}" must sit right under the marker, above the lead`);
 });
 
 // ---- 15 lines. The **Behind:** line does not count: it is a fact for whoever turns the change

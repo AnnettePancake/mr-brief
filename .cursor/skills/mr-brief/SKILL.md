@@ -72,7 +72,7 @@ is attached, posted, uploaded or commented, and the checkout never moves.
 | Element | Limit |
 |---|---|
 | Series line | 1 line, only when the MR is one of a set |
-| Issue lines | right under the marker, one line per issue: `Closes #12` when the MR finishes it, `Part of #12` when it does a share. A bare `#12` or the ticket on the series line only links, and the issue stays open after the merge. Absent when there is no issue |
+| Issue lines | right under the marker, one line per issue: `Closes #12` when the MR finishes it, `Part of #12` when it does a share. Each issue needs its own keyword: `Closes #1, closes #2`. A bare `#12` or the ticket on the series line only links, and the issue stays open after the merge. `No issue` when there is none |
 | What changes | 1 sentence, 140 chars: **who can now do what**, in words a developer from the next team understands |
 | Why | `**Why:**` 1–2 sentences, 280 chars: the need or the problem — what someone could not do, or what went wrong, before this MR |
 | Behind | `**Behind:**` 1 line, only when the change runs only with a switch on: the key as code, where it lives (setting, feature flag, env var, per-tenant config) and its default. Absent when nothing switches it |
@@ -189,9 +189,10 @@ flow does not do that.
    Two MRs from the same repo with the same title are a duplicate, not a series — say so.
    **Issue lines.** Find the issue the MR answers: the branch name, the commits, the
    author. Write `Closes #N` right under the marker when this MR finishes it, `Part of #N`
-   when it does only a share (the last MR of the set says `Closes`). Lint keeps the line
-   out of the lead. `attach.mjs` replaces the whole description, so a closing line typed
-   into the MR by hand is lost unless it is in the brief file.
+   when it does only a share (the last MR of the set says `Closes`), `No issue` when there
+   is none. One line per issue, each with its own keyword. Lint keeps these lines out of
+   the lead. `attach.mjs` replaces the whole description, so a closing line typed into the
+   MR by hand is lost unless it is in the brief file.
 6. **Two picture gates, both default no.** *Architecture* — only if a service now calls
    another it did not before, or the MR is one of a set. *Flow* — only if a call between
    services, a state machine, a job or sweep, a webhook, or an order of operations moved.

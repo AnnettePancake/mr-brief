@@ -3,7 +3,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,3 +33,11 @@ for (const f of readdirSync(fixtures).filter((n) => n.endsWith(".md"))) {
     }
   });
 }
+
+test("an issue line inside a code block is an example, not a misplaced line", () => {
+  const brief = readFileSync(join(fixtures, "pass-minimal.md"), "utf8").replace("### Risk", "```\nFixes #12\n```\n\n### Risk");
+  const file = join(mkdtempSync(join(tmpdir(), "mr-brief-")), "brief.md");
+  writeFileSync(file, brief);
+  const r = spawnSync("node", [lint, file], { encoding: "utf8" });
+  assert.ok(!r.stdout.includes("must sit right under the marker"), r.stdout);
+});
