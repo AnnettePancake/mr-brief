@@ -9,6 +9,7 @@
 
 import { readFileSync } from "node:fs";
 import { MARKER, readHead, isStale } from "./lib/marker.mjs";
+import { ISSUE, issueLines } from "./lib/issue.mjs";
 
 const argv = process.argv.slice(2);
 const file = argv.find((a, i) => !a.startsWith("--") && argv[i - 1] !== "--head");
@@ -25,17 +26,8 @@ const head = readHead(src);
 if (current && head && isStale(head, current)) notes.push(`stale — the brief describes ${head.slice(0, 9)}, the MR is at ${current.slice(0, 9)}: re-run /mr-brief, or check the claims still hold`);
 if (current && head === null) notes.push("the brief names no commit (no head= on line one) — it cannot tell when it went stale");
 
-// ---- issue lines: `Closes #12` right under the marker, one per issue, so the merge closes it.
-// The ticket on the series line, or a bare `#12`, only links. Optional; not text, not the lead.
-const REF = String.raw`(?:[\w.-]+(?:\/[\w.-]+)*)?#\d+|[A-Z][A-Z0-9]+-\d+|https?:\/\/\S+`;
-const ISSUE = new RegExp(String.raw`^(?:(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?|implement(?:s|ed)?|part of)\s+(?:${REF})\b|no issue\.?\s*$)`, "i");
-const issueLines = new Set();
-for (let i = 1; i < lines.length; i++) {
-  const s = lines[i].trim();
-  if (s === "") continue;
-  if (!ISSUE.test(s)) break;
-  issueLines.add(i);
-}
+// ---- issue lines (`Closes #12` under the marker): not text, not the lead. See lib/issue.mjs.
+const issueAt = issueLines(lines);
 
 // ---- carve out what does not count as text: mermaid blocks (+ one legend line), <details>
 let inMermaid = false, inDetails = false, afterMermaid = false, mermaidBlocks = 0, mermaidAt = -1, pictures = 0, pictureAt = -1, foldedPictures = 0, foldedAt = -1;
@@ -54,7 +46,7 @@ lines.forEach((raw, i) => {
   if (s.trim() === "" || s.trim() === ">" || /^-{3,}$/.test(s.trim())) return; // blank, the bare quote separator, or a rule
   if (/^!\[[^\]]*\]\([^)]+\)\s*$/.test(s.trim())) { pictures++; pictureAt = i; afterMermaid = true; return; } // a rendered picture; the next italic line is its legend
   if (i === 0) return; // marker / series line
-  if (issueLines.has(i)) return; // Closes #N
+  if (issueAt.has(i)) return; // Closes #N
   text.push({ i, s });
 });
 text.forEach(({ i, s }) => {
