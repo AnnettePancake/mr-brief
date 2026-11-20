@@ -16,6 +16,7 @@ const EXPECT = {
   "fail-where-to-look.md": ["where-to-look 1 names a place, not a question", "where-to-look 1 must end with \"· key change N\"", "checks key change 2 only"],
   "fail-guide-too-long.md": ["reading guide has 9 files; at most 8"],
   "fail-ai-tells.md": ["line 3: \"robust\"", "line 3: a dash inside the sentence", "line 11: \"seamlessly\"", "line 11: a second dash", "**Behind:** must name the switch as code", "**Behind:** must say the default"],
+  "fail-issue-line.md": ["line 5: \"Fixes #12\" must sit right under the marker, above the lead"],
   "fail-shape.md": ["mr-brief v1", "missing **Why:**", "missing ### Key changes", "**Architecture:** is present but empty", "the first line under ### Where to look must be \"**Start →**", "<summary> must be on its own line"],
 };
 

@@ -25,6 +25,18 @@ const head = readHead(src);
 if (current && head && isStale(head, current)) notes.push(`stale — the brief describes ${head.slice(0, 9)}, the MR is at ${current.slice(0, 9)}: re-run /mr-brief, or check the claims still hold`);
 if (current && head === null) notes.push("the brief names no commit (no head= on line one) — it cannot tell when it went stale");
 
+// ---- issue lines: `Closes #12` right under the marker, one per issue, so the merge closes it.
+// The ticket on the series line, or a bare `#12`, only links. Optional; not text, not the lead.
+const REF = String.raw`(?:[\w.-]+(?:\/[\w.-]+)*)?#\d+|[A-Z][A-Z0-9]+-\d+|https?:\/\/\S+`;
+const ISSUE = new RegExp(String.raw`^(?:(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?|implement(?:s|ed)?|part of)\s+(?:${REF})\b|no issue\.?\s*$)`, "i");
+const issueLines = new Set();
+for (let i = 1; i < lines.length; i++) {
+  const s = lines[i].trim();
+  if (s === "") continue;
+  if (!ISSUE.test(s)) break;
+  issueLines.add(i);
+}
+
 // ---- carve out what does not count as text: mermaid blocks (+ one legend line), <details>
 let inMermaid = false, inDetails = false, afterMermaid = false, mermaidBlocks = 0, mermaidAt = -1, pictures = 0, pictureAt = -1, foldedPictures = 0, foldedAt = -1;
 const text = []; // {i, s}
@@ -42,7 +54,11 @@ lines.forEach((raw, i) => {
   if (s.trim() === "" || s.trim() === ">" || /^-{3,}$/.test(s.trim())) return; // blank, the bare quote separator, or a rule
   if (/^!\[[^\]]*\]\([^)]+\)\s*$/.test(s.trim())) { pictures++; pictureAt = i; afterMermaid = true; return; } // a rendered picture; the next italic line is its legend
   if (i === 0) return; // marker / series line
+  if (issueLines.has(i)) return; // Closes #N
   text.push({ i, s });
+});
+text.forEach(({ i, s }) => {
+  if (ISSUE.test(s.trim())) fail.push(`line ${i + 1}: "${s.trim()}" must sit right under the marker, above the lead`);
 });
 
 // ---- 15 lines. The **Behind:** line does not count: it is a fact for whoever turns the change
